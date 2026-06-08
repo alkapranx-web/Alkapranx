@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kuis B. Indonesia XI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2230;
+    --border: #2a3244;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --accent: #f78166;
+    --green: #3fb950;
+    --red: #f85149;
+    --gold: #e3b341;
+    --blue: #58a6ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Figtree', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 16px 60px;
+  }
+
+  /* PARTICLES BG */
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(247,129,102,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(247,129,102,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  .header {
+    width: 100%;
+    max-width: 700px;
+    padding: 40px 0 32px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(247,129,102,0.12);
+    border: 1px solid rgba(247,129,102,0.25);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    line-height: 1.1;
+    margin-bottom: 10px;
+  }
+  .header h1 span { color: var(--accent); }
+  .header p { color: var(--muted); font-size: 14px; }
+
+  /* TOPIC SELECTOR */
+  .topic-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 700px;
+    margin-bottom: 28px;
+    position: relative;
+    z-index: 1;
+  }
+  .topic-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .topic-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .topic-card.selected {
+    border-color: var(--accent);
+    background: rgba(247,129,102,0.08);
+  }
+  .topic-icon { font-size: 24px; flex-shrink: 0; }
+  .topic-info h3 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .topic-info p { font-size: 12px; color: var(--muted); }
+
+  /* START SCREEN */
+  #start-screen { width: 100%; max-width: 700px; position: relative; z-index: 1; }
+  .start-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .start-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(247,129,102,0.3); }
+
+  /* QUIZ SCREEN */
+  #quiz-screen {
+    width: 100%;
+    max-width: 700px;
+    display: none;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* PROGRESS */
+  .progress-wrap { margin-bottom: 20px; }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .q-count { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .score-live {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    background: rgba(227,179,65,0.12);
+    padding: 3px 10px;
+    border-radius: 10px;
+  }
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--gold));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  /* QUESTION CARD */
+  .q-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    margin-bottom: 16px;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .q-topic-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    background: rgba(88,166,255,0.12);
+    color: var(--blue);
+    border: 1px solid rgba(88,166,255,0.2);
+  }
+  .q-text {
+    font-size: 16px;
+    line-height: 1.65;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  /* OPTIONS */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    text-align: left;
+    color: var(--text);
+    font-family: 'Figtree', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    line-height: 1.5;
+  }
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(247,129,102,0.07);
+  }
+  .option-letter {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .option-btn.correct {
+    border-color: var(--green);
+    background: rgba(63,185,80,0.08);
+  }
+  .option-btn.correct .option-letter { background: var(--green); color: #fff; }
+  .option-btn.wrong {
+    border-color: var(--red);
+    background: rgba(248,81,73,0.08);
+  }
+  .option-btn.wrong .option-letter { background: var(--red); color: #fff; }
+  .option-btn:disabled { cursor: default; }
+
+  /* FEEDBACK */
+  .feedback {
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    display: none;
+    animation: fadeUp 0.3s ease;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .feedback.show { display: flex; gap: 12px; align-items: flex-start; }
+  .feedback.correct-fb {
+    background: rgba(63,185,80,0.1);
+    border: 1px solid rgba(63,185,80,0.25);
+  }
+  .feedback.wrong-fb {
+    background: rgba(248,81,73,0.1);
+    border: 1px solid rgba(248,81,73,0.25);
+  }
+  .fb-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .fb-text h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .fb-text p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .feedback.correct-fb .fb-text h4 { color: var(--green); }
+  .feedback.wrong-fb .fb-text h4 { color: var(--red); }
+
+  /* NEXT BTN */
+  .next-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'Figtree', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: none;
+  }
+  .next-btn.show {
+    display: block;
+    animation: fadeUp 0.3s ease;
+  }
+  .next-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* RESULT SCREEN */
+  #result-screen {
+    width: 100%;
+    max-width: 700px;
+    display: none;
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+  .result-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 32px;
+    margin-bottom: 20px;
+  }
+  .result-emoji { font-size: 56px; margin-bottom: 16px; display: block; }
+  .result-score {
+    font-family: 'Syne', sans-serif;
+    font-size: 4rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .result-label { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+  .result-grade {
+    display: inline-block;
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    padding: 10px 28px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .stat-item {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .restart-btn {
+    width: 100%;
+    padding: 15px;
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 10px;
+  }
+  .restart-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(247,129,102,0.3); }
+  .review-btn {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'Figtree', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .review-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* REVIEW */
+  #review-screen {
+    width: 100%;
+    max-width: 700px;
+    display: none;
+    position: relative;
+    z-index: 1;
+  }
+  .review-item {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+  .review-item.r-correct { border-color: rgba(63,185,80,0.3); }
+  .review-item.r-wrong { border-color: rgba(248,81,73,0.3); }
+  .review-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .review-status { font-size: 16px; }
+  .review-qnum { font-size: 11px; color: var(--muted); font-weight: 600; }
+  .review-q { font-size: 14px; font-weight: 500; line-height: 1.6; margin-bottom: 12px; }
+  .review-answers { display: flex; flex-direction: column; gap: 6px; }
+  .review-ans {
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .review-ans.r-correct-ans { background: rgba(63,185,80,0.1); color: var(--green); }
+  .review-ans.r-wrong-ans { background: rgba(248,81,73,0.1); color: var(--red); }
+  .review-ans.r-neutral { background: var(--surface2); color: var(--muted); }
+  .back-btn {
+    padding: 12px 24px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Figtree', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: all 0.2s;
+  }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  @media (max-width: 480px) {
+    .topic-grid { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .player-input{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1.5px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  font-size:14px;
+  font-family:'Figtree', sans-serif;
+}
+
+.player-input:focus{
+  outline:none;
+  border-color:var(--accent);
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+
+<!-- START SCREEN -->
+<div class="header">
+  <div class="header-badge">✦ Kelas XI · 2025–2026</div>
+  <h1>Kuis <span>B. Indonesia</span></h1>
+  <p>Pilih topik lalu uji pemahamanmu!</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+
+  <input
+    type="text"
+    id="player-name"
+    placeholder="Masukkan Nama Lengkap"
+    class="player-input"
+  >
+
+  <input
+    type="text"
+    id="player-class"
+    placeholder="Masukkan Kelas"
+    class="player-input"
+  >
+
+</div>
+<div id="start-screen">
+  <div class="topic-grid">
+    <div class="topic-card selected" onclick="selectTopic('semua')" id="topic-semua">
+      <div class="topic-icon">🎯</div>
+      <div class="topic-info"><h3>Semua Topik</h3><p>25 soal campuran</p></div>
+    </div>
+    <div class="topic-card" onclick="selectTopic('karya')" id="topic-karya">
+      <div class="topic-icon">📄</div>
+      <div class="topic-info"><h3>Karya Ilmiah</h3><p>13 soal</p></div>
+    </div>
+    <div class="topic-card" onclick="selectTopic('drama')" id="topic-drama">
+      <div class="topic-icon">🎭</div>
+      <div class="topic-info"><h3>Drama</h3><p>12 soal</p></div>
+    </div>
+    <div class="topic-card" onclick="selectTopic('acak')" id="topic-acak">
+      <div class="topic-icon">🎲</div>
+      <div class="topic-info"><h3>10 Soal Acak</h3><p>Campuran singkat</p></div>
+    </div>
+  </div>
+  <button class="start-btn" onclick="startQuiz()">Mulai Kuis →</button>
+</div>
+<!-- QUIZ SCREEN -->
+<div id="quiz-screen">
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span class="q-count" id="q-count">Soal 1 dari 25</span>
+      <span class="score-live" id="score-live">⭐ 0</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+  <div class="q-card">
+    <div class="q-topic-tag" id="q-topic-tag">Karya Ilmiah</div>
+    <div class="q-text" id="q-text"></div>
+  </div>
+  <div class="options" id="options"></div>
+  <div class="feedback" id="feedback">
+    <div class="fb-icon" id="fb-icon"></div>
+    <div class="fb-text">
+      <h4 id="fb-title"></h4>
+      <p id="fb-explain"></p>
+    </div>
+  </div>
+  <button class="next-btn" id="next-btn" onclick="nextQuestion()">Soal Berikutnya →</button>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="result-screen">
+  <div class="result-card">
+    <span class="result-emoji" id="result-emoji"></span>
+    <div class="result-score" id="result-score"></div>
+    <div class="result-label" id="result-label"></div>
+    <div class="result-grade" id="result-grade"></div>
+    <div class="stat-grid">
+      <div class="stat-item">
+        <div class="stat-num" id="stat-correct" style="color:var(--green)"></div>
+        <div class="stat-lbl">✅ Benar</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num" id="stat-wrong" style="color:var(--red)"></div>
+        <div class="stat-lbl">❌ Salah</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num" id="stat-total" style="color:var(--blue)"></div>
+        <div class="stat-lbl">📋 Total</div>
+      </div>
+    </div>
+  </div>
+  <button class="restart-btn" onclick="restartQuiz()">🔄 Main Lagi</button>
+  <button class="review-btn" onclick="showReview()">📖 Lihat Semua Jawaban</button>
+</div>
+
+<!-- REVIEW SCREEN -->
+<div id="review-screen">
+  <button class="back-btn" onclick="backToResult()">← Kembali ke Hasil</button>
+  <div id="review-list"></div>
+</div>
+
+<script>
+const ALL_QUESTIONS = [
+  // ====== KARYA ILMIAH ======
+  {
+    topic: "Karya Ilmiah",
+    q: "Karya ilmiah adalah tulisan yang harus memenuhi syarat-syarat tertentu. Manakah yang BUKAN merupakan syarat karya ilmiah?",
+    opts: ["Sistematis dan berurutan logis", "Berdasarkan data dan fakta", "Menggunakan bahasa sehari-hari yang santai", "Dapat dipertanggungjawabkan secara ilmiah"],
+    ans: 2,
+    explain: "Karya ilmiah harus menggunakan bahasa formal dan baku, bukan bahasa sehari-hari yang santai. Inilah salah satu ciri kebahasaannya yang penting."
+  },
+  {
+    topic: "Karya Ilmiah",
+    q: "Abstrak dalam karya ilmiah berfungsi sebagai...",
+    opts: ["Daftar semua sumber yang digunakan", "Ringkasan menyeluruh isi karya ilmiah", "Penjelasan detail tentang metode penelitian", "Daftar pertanyaan yang akan diteliti"],
+    ans: 1,
+    explain: "Abstrak adalah ringkasan singkat (150–250 kata) yang mencakup tujuan, metode, hasil, dan kesimpulan. Pembaca bisa memahami isi penelitian hanya dari abstrak."
+  },
+  {
+    topic: "Karya Ilmiah",
+    q: "Bagian manakah yang menjawab pertanyaan 'Mengapa topik ini penting untuk diteliti?'",
+    opts: ["Rumusan masalah", "Tujuan penelitian", "Latar belakang", "Manfaat penelitian"],
+    ans: 2,
+    explain: "Latar belakang berisi alasan dan kondisi yang mendorong penelitian dilakukan — menjawab 'mengapa topik ini penting.' Ini adalah fondasi sebelum rumusan masalah dirumuskan."
+  },
+  {
+    topic: "Karya Ilmiah",
+    q: "Perhatikan kalimat berikut: 'Apakah terdapat hubungan antara kebiasaan membaca dengan kemampuan menulis siswa kelas XI?' Kalimat tersebut termasuk bagian apa?",
+    opts: ["Latar belakang", "Tujuan penelitian", "Rumusan masalah", "Manfaat penelitian"],
+    ans: 2,
+    explain: "Rumusan masalah berbentuk pertanyaan penelitian yang spesifik dan terarah. Kalimat tersebut adalah pertanyaan yang ingin dijawab melalui penelitian, sehingga termasuk rumusan masalah."
+  },
+  {
+    topic: "Karya Ilmiah",
+    q: "Jika rumusan masalahnya adalah 'Apakah media sosial berpengaruh terhadap prestasi belajar?', maka tujuan penelitiannya yang tepat adalah...",
+    opts: ["Mengapa media sosial berbahaya bagi siswa?", "Mengetahui pengaruh media sosial terhadap prestasi belajar", "Media sosial harus dibatasi penggunaannya", "Faktor-faktor yang mempengaruhi prestasi belajar"],
+    ans: 1,
+    explain: "Tujuan penelitian adalah 'versi pernyataan' dari rumusan masalah. Jika rumusan masalah berupa pertanyaan 'apakah X berpengaruh...?', tujuannya adalah 'mengetahui pengaruh X...'."
+  },
+  {
+    topic: "Karya Ilmiah",
+    q: "Manfaat penelitian terbagi menjadi dua jenis. Manakah pasangan yang BENAR?",
+    opts: ["Manfaat umum dan manfaat khusus", "Manfaat teoritis dan manfaat praktis", "Manfaat langsung dan manfaat tidak langsung", "Manfaat ilmiah dan manfaat sosial"],
+    ans: 1,
+    explain: "Manfaat penelitian dibagi menjadi: (1) Manfaat teoritis — kontribusi untuk ilmu pengetahuan, dan (2) Manfaat praktis — kegunaan langsung bagi pihak-pihak tertentu seperti guru, orang tua, atau masyarakat."
+  },
+  {
+    topic: "Karya Ilmiah",
+    q: "Urutan struktur karya ilmiah yang benar adalah...",
+    opts: ["Abstrak → Judul → Pendahuluan → Pembahasan → Kesimpulan", "Judul → Abstrak → Pendahuluan → Pembahasan → Kesimpulan", "Pendahuluan → Judul → Abstrak → Pembahasan → Kesimpulan", "Judul → Pendahuluan → Abstrak → Pembahasan → Kesimpulan"],
+    ans: 1,
+    explain: "Urutan baku karya ilmiah: Judul → Abstrak → Pendahuluan (latar belakang, rumusan masalah, tujuan, manfaat) → Kajian Pustaka → Metodologi → Hasil & Pembahasan → Kesimpulan → Daftar Pustaka."
+  },
+  {
+    topic: "Karya Ilmiah",
+    q: "Ciri kebahasaan karya ilmiah yang membedakannya dari karya sastra adalah...",
+    opts: ["Menggunakan banyak majas dan kiasan", "Menggunakan bahasa yang emotif dan subjektif", "Menggunakan kalimat pasif dan istilah teknis", "Menggunakan dialog antar tokoh"],
+    ans: 2,
+    explain: "Karya ilmiah menggunakan kalimat pasif (contoh: 'penelitian ini dilakukan...') dan istilah teknis sesuai bidang ilmu. Majas, bahasa emotif, dan dialog adalah ciri karya sastra, bukan karya ilmiah."
+  },
+  {
+    topic: "Karya Ilmiah",
+    q: "Seorang siswa ingin menulis penelitian tentang pengaruh warna ruang kelas terhadap konsentrasi belajar, tetapi penelitiannya belum dilakukan. Jenis karya ilmiah yang paling tepat adalah...",
+    opts: ["Laporan penelitian", "Makalah", "Proposal penelitian", "Artikel ilmiah"],
+    ans: 2,
+    explain: "Proposal penelitian adalah rencana penelitian yang AKAN dilakukan. Karena penelitiannya belum dilaksanakan, yang dibuat adalah proposal. Laporan penelitian dibuat SETELAH penelitian selesai."
+  },
+  {
+    topic: "Karya Ilmiah",
+    q: "Kalimat mana yang paling mencerminkan ciri kebahasaan karya ilmiah yang benar?",
+    opts: ["Menurutku, masalah ini sangat memprihatinkan sekali!", "Data yang diperoleh menunjukkan adanya korelasi positif antara kedua variabel.", "Wah, ternyata hasilnya bikin kaget banget!", "Saya yakin bahwa hipotesis saya pasti benar."],
+    ans: 1,
+    explain: "Kalimat 'Data yang diperoleh menunjukkan...' bersifat objektif, menggunakan kalimat pasif, dan memakai istilah teknis (korelasi, variabel). Pilihan lain mengandung subjektivitas dan bahasa tidak baku."
+  },
+  {
+    topic: "Karya Ilmiah",
+    q: "Apa perbedaan utama antara makalah dan laporan penelitian?",
+    opts: ["Makalah lebih panjang daripada laporan penelitian", "Laporan penelitian berisi data hasil penelitian langsung, makalah lebih berbasis teori/kajian", "Makalah hanya untuk mahasiswa, laporan untuk siswa SMA", "Tidak ada perbedaan, keduanya sama saja"],
+    ans: 1,
+    explain: "Laporan penelitian berisi data dan temuan dari penelitian yang benar-benar dilakukan. Makalah biasanya membahas topik berdasarkan kajian teori atau sumber pustaka, tanpa penelitian lapangan yang mendalam."
+  },
+  {
+    topic: "Karya Ilmiah",
+    q: "Judul karya ilmiah yang PALING baik dan tepat adalah...",
+    opts: ["Masalah Lingkungan", "Pengaruh Sampah Plastik terhadap Kualitas Air Sungai Ciliwung di Jakarta Tahun 2025", "Plastik Itu Buruk untuk Lingkungan", "Sebuah Penelitian tentang Sungai"],
+    ans: 1,
+    explain: "Judul karya ilmiah yang baik harus spesifik, informatif, dan tidak ambigu. Pilihan B menyebutkan variabel (sampah plastik, kualitas air), lokasi (Ciliwung, Jakarta), dan waktu (2025) secara jelas."
+  },
+  {
+    topic: "Karya Ilmiah",
+    q: "Pernyataan 'Hasil penelitian ini diharapkan dapat membantu guru dalam merancang strategi pembelajaran yang lebih efektif' termasuk jenis manfaat apa?",
+    opts: ["Manfaat teoritis", "Manfaat praktis", "Manfaat akademis", "Manfaat umum"],
+    ans: 1,
+    explain: "Ini adalah manfaat praktis karena langsung bisa diterapkan oleh pihak tertentu (guru). Manfaat teoritis biasanya berkaitan dengan kontribusi pada pengembangan ilmu pengetahuan secara umum."
+  },
+
+  // ====== DRAMA ======
+  {
+    topic: "Drama",
+    q: "Drama berbeda dari prosa dan puisi karena drama...",
+    opts: ["Tidak memiliki tokoh", "Menggunakan rima yang teratur", "Ditulis dalam bentuk dialog dan dirancang untuk dipentaskan", "Hanya bisa dinikmati dengan membaca"],
+    ans: 2,
+    explain: "Ciri utama drama adalah ditulis dalam bentuk dialog (percakapan) dan dirancang untuk dipentaskan di atas panggung. Ini yang membedakannya dari prosa (cerita) dan puisi."
+  },
+  {
+    topic: "Drama",
+    q: "Perhatikan teks berikut: '(Budi masuk dengan wajah pucat, tangannya gemetar)'. Teks dalam kurung tersebut disebut...",
+    opts: ["Dialog", "Monolog", "Kramagung / petunjuk teknis", "Prolog"],
+    ans: 2,
+    explain: "Kramagung adalah petunjuk teknis yang ditulis dalam kurung, berisi instruksi tentang gerak, ekspresi, atau situasi untuk pemain dan sutradara. Ini salah satu ciri khas naskah drama."
+  },
+  {
+    topic: "Drama",
+    q: "Dalam sebuah drama, tokoh A selalu merasa ragu untuk memilih antara karier dan keluarga. Ini adalah contoh konflik...",
+    opts: ["Konflik eksternal manusia vs manusia", "Konflik eksternal manusia vs alam", "Konflik internal (dalam diri sendiri)", "Konflik manusia vs masyarakat"],
+    ans: 2,
+    explain: "Konflik internal terjadi di dalam batin tokoh itu sendiri — pertentangan perasaan, pilihan, atau prinsip yang dialami seorang tokoh. Contoh: dilema, keragu-raguan, pertentangan nilai."
+  },
+  {
+    topic: "Drama",
+    q: "Tokoh yang berwatak baik dan menjadi 'pahlawan' utama dalam drama disebut...",
+    opts: ["Antagonis", "Tritagonis", "Figuran", "Protagonis"],
+    ans: 3,
+    explain: "Protagonis adalah tokoh utama yang berwatak positif/baik — cerita mengikuti perjalanannya. Antagonis adalah lawannya (berwatak negatif). Tritagonis berperan sebagai penengah/netral."
+  },
+  {
+    topic: "Drama",
+    q: "Introduksi dalam drama berisi...",
+    opts: ["Penyelesaian dari semua konflik", "Puncak ketegangan cerita", "Pengenalan tokoh, latar, dan situasi awal sebelum konflik muncul", "Peristiwa yang memperumit konflik"],
+    ans: 2,
+    explain: "Introduksi (atau eksposisi) adalah bagian pembuka drama yang memperkenalkan siapa tokohnya, di mana cerita terjadi, dan seperti apa kondisi awalnya. Ini adalah 'pintu masuk' ke dunia drama."
+  },
+  {
+    topic: "Drama",
+    q: "Resolusi dalam drama adalah...",
+    opts: ["Bagian paling menegangkan dalam cerita", "Perkenalan tokoh-tokoh utama", "Penyelesaian konflik yang terjadi dalam cerita", "Konflik pertama yang muncul dalam cerita"],
+    ans: 2,
+    explain: "Resolusi adalah bagian akhir drama di mana konflik diselesaikan dan nasib para tokoh menjadi jelas. Bisa berakhir bahagia (happy ending) atau tragis (sad ending)."
+  },
+  {
+    topic: "Drama",
+    q: "Drama yang berakhir dengan kesedihan, penderitaan, atau kematian tokoh utama disebut...",
+    opts: ["Komedi", "Melodrama", "Tragedi", "Tragikomedi"],
+    ans: 2,
+    explain: "Tragedi adalah drama yang berakhir menyedihkan. Contoh terkenal: Romeo & Juliet. Komedi berakhir bahagia, melodrama penuh emosi berlebihan, tragikomedi mencampur kedua unsur."
+  },
+  {
+    topic: "Drama",
+    q: "Urutan alur drama yang benar dari awal sampai akhir adalah...",
+    opts: ["Klimaks → Eksposisi → Komplikasi → Antiklimaks → Resolusi", "Eksposisi → Komplikasi → Klimaks → Antiklimaks → Resolusi", "Komplikasi → Eksposisi → Klimaks → Resolusi → Antiklimaks", "Resolusi → Eksposisi → Komplikasi → Klimaks → Antiklimaks"],
+    ans: 1,
+    explain: "Alur drama: Eksposisi (perkenalan) → Komplikasi (konflik berkembang) → Klimaks (puncak konflik) → Antiklimaks (tegangan mereda) → Resolusi (penyelesaian). Ini membentuk kurva tegangan yang logis."
+  },
+  {
+    topic: "Drama",
+    q: "Drama yang menggunakan gerak tubuh dan ekspresi tanpa dialog disebut...",
+    opts: ["Opera", "Sendratari", "Pantomim", "Melodrama"],
+    ans: 2,
+    explain: "Pantomim adalah drama yang tidak menggunakan dialog sama sekali — semua cerita disampaikan melalui gerak tubuh (gesture) dan ekspresi wajah. Sendratari menggunakan tarian, opera menggunakan nyanyian."
+  },
+  {
+    topic: "Drama",
+    q: "Watak seorang tokoh dalam drama TIDAK bisa diketahui melalui...",
+    opts: ["Dialog yang diucapkan tokoh", "Kramagung / petunjuk gerak", "Nama penulis naskah drama", "Komentar tokoh lain tentangnya"],
+    ans: 2,
+    explain: "Watak tokoh diketahui melalui: (1) dialog, (2) tindakan, (3) kramagung, dan (4) komentar tokoh lain. Nama penulis naskah tidak mencerminkan watak tokoh dalam cerita."
+  },
+  {
+    topic: "Drama",
+    q: "Berikut ini yang termasuk ciri-ciri drama, KECUALI...",
+    opts: ["Mengandung konflik sebagai penggerak cerita", "Ditulis dalam bentuk dialog antar tokoh", "Menggunakan sudut pandang orang pertama secara konsisten", "Dilengkapi babak dan adegan"],
+    ans: 2,
+    explain: "Drama tidak ditulis dari sudut pandang orang pertama — drama ditulis dalam bentuk dialog dan kramagung, bukan narasi. Sudut pandang orang pertama ('aku') adalah ciri khas prosa/cerpen."
+  },
+  {
+    topic: "Drama",
+    q: "Pada adegan klimaks, tokoh Rani akhirnya mengungkapkan kebenaran yang selama ini disembunyikan, menyebabkan semua tokoh terkejut. Dalam alur drama, bagian ini adalah...",
+    opts: ["Eksposisi", "Komplikasi", "Klimaks", "Resolusi"],
+    ans: 2,
+    explain: "Klimaks adalah titik ketegangan TERTINGGI — peristiwa paling menentukan yang mengubah arah cerita secara dramatis. Pengungkapan kebenaran besar yang mengejutkan semua orang adalah ciri khas klimaks."
+  }
+];
+
+let selectedTopic = 'semua';
+
+let playerName = "";
+let playerClass = "";
+
+let currentQuestions = [];
+let currentIdx = 0;
+let score = 0;
+let userAnswers = [];
+let answered = false;
+
+function selectTopic(t) {
+  selectedTopic = t;
+  document.querySelectorAll('.topic-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('topic-' + t).classList.add('selected');
+}
+
+function startQuiz() {  playerName =
+    document.getElementById("player-name").value.trim();
+
+  playerClass =
+    document.getElementById("player-class").value.trim();
+
+  if (!playerName) {
+    alert("Masukkan nama dan kelas terlebih dahulu Bro!");
+    return;
+  }
+
+  if (!playerClass) {
+    alert("Masukkan kelas terlebih dahulu!");
+    return;
+  }
+  let pool = [];
+  if (selectedTopic === 'semua') pool = [...ALL_QUESTIONS];
+  else if (selectedTopic === 'karya') pool = ALL_QUESTIONS.filter(q => q.topic === 'Karya Ilmiah');
+  else if (selectedTopic === 'drama') pool = ALL_QUESTIONS.filter(q => q.topic === 'Drama');
+  else if (selectedTopic === 'acak') {
+    const shuffled = [...ALL_QUESTIONS].sort(() => Math.random() - 0.5);
+    pool = shuffled.slice(0, 10);
+  }
+  currentQuestions = pool.sort(() => Math.random() - 0.5);
+  currentIdx = 0; score = 0; userAnswers = [];
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = currentQuestions[currentIdx];
+  const total = currentQuestions.length;
+
+  document.getElementById('q-count').textContent = `Soal ${currentIdx + 1} dari ${total}`;
+  document.getElementById('score-live').textContent = `⭐ ${score}`;
+  document.getElementById('progress-fill').style.width = `${(currentIdx / total) * 100}%`;
+  document.getElementById('q-topic-tag').textContent = q.topic;
+  document.getElementById('q-text').textContent = q.q;
+
+  const letters = ['A', 'B', 'C', 'D'];
+  const optionsEl = document.getElementById('options');
+  optionsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span> ${opt}`;
+    btn.onclick = () => checkAnswer(i);
+    optionsEl.appendChild(btn);
+  });
+
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('next-btn').className = 'next-btn';
+}
+
+function checkAnswer(chosen) {
+  if (answered) return;
+  answered = true;
+  const q = currentQuestions[currentIdx];
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true);
+
+  userAnswers.push({ q, chosen });
+
+  const isCorrect = chosen === q.ans;
+  if (isCorrect) score++;
+
+  btns[q.ans].classList.add('correct');
+  if (!isCorrect) btns[chosen].classList.add('wrong');
+
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'correct-fb' : 'wrong-fb');
+  document.getElementById('fb-icon').textContent = isCorrect ? '🎉' : '💡';
+  document.getElementById('fb-title').textContent = isCorrect ? 'Benar! Luar biasa!' : 'Belum tepat — tapi jangan menyerah!';
+  document.getElementById('fb-explain').textContent = q.explain;
+
+  document.getElementById('score-live').textContent = `⭐ ${score}`;
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.className = 'next-btn show';
+  nextBtn.textContent = currentIdx + 1 < currentQuestions.length ? 'Soal Berikutnya →' : 'Lihat Hasil →';
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx < currentQuestions.length) {
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+
+  const total = currentQuestions.length;
+  const pct = Math.round((score / total) * 100);
+
+  document.getElementById('result-score').textContent = `${pct}%`;
+  document.getElementById('result-label').textContent = `${score} dari ${total} soal benar`;
+  document.getElementById('stat-correct').textContent = score;
+  document.getElementById('stat-wrong').textContent = total - score;
+  document.getElementById('stat-total').textContent = total;
+
+  let emoji, grade, gradeStyle;
+  if (pct >= 90) { emoji = '🏆'; grade = 'Nilai A — Sempurna!'; gradeStyle = 'background:rgba(63,185,80,0.15); color:var(--green); border:1.5px solid rgba(63,185,80,0.3)'; }
+  else if (pct >= 80) { emoji = '🌟'; grade = 'Nilai B — Hebat!'; gradeStyle = 'background:rgba(88,166,255,0.15); color:var(--blue); border:1.5px solid rgba(88,166,255,0.3)'; }
+  else if (pct >= 70) { emoji = '👍'; grade = 'Nilai C — Lumayan!'; gradeStyle = 'background:rgba(227,179,65,0.15); color:var(--gold); border:1.5px solid rgba(227,179,65,0.3)'; }
+  else if (pct >= 60) { emoji = '📚'; grade = 'Nilai D — Perlu Belajar Lagi'; gradeStyle = 'background:rgba(247,129,102,0.15); color:var(--accent); border:1.5px solid rgba(247,129,102,0.3)'; }
+  else { emoji = '💪'; grade = 'Nilai E — Ayo Semangat!'; gradeStyle = 'background:rgba(248,81,73,0.15); color:var(--red); border:1.5px solid rgba(248,81,73,0.3)'; }
+
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-grade').textContent = grade;
+  document.getElementById('result-grade').style.cssText += gradeStyle;
+}
+
+function showReview() {
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('review-screen').style.display = 'block';
+
+  const letters = ['A', 'B', 'C', 'D'];
+  const list = document.getElementById('review-list');
+  list.innerHTML = '';
+
+  userAnswers.forEach((item, i) => {
+    const { q, chosen } = item;
+    const isCorrect = chosen === q.ans;
+    const div = document.createElement('div');
+    div.className = 'review-item ' + (isCorrect ? 'r-correct' : 'r-wrong');
+
+    let optsHtml = '';
+    q.opts.forEach((opt, j) => {
+      let cls = 'r-neutral';
+      let icon = '';
+      if (j === q.ans) { cls = 'r-correct-ans'; icon = '✅ '; }
+      else if (j === chosen && !isCorrect) { cls = 'r-wrong-ans'; icon = '❌ '; }
+      optsHtml += `<div class="review-ans ${cls}">${icon}${letters[j]}. ${opt}</div>`;
+    });
+
+    div.innerHTML = `
+      <div class="review-header">
+        <span class="review-status">${isCorrect ? '✅' : '❌'}</span>
+        <span class="review-qnum">Soal ${i + 1} · ${q.topic}</span>
+      </div>
+      <div class="review-q">${q.q}</div>
+      <div class="review-answers">${optsHtml}</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function backToResult() {
+  document.getElementById('review-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+}
+
+function restartQuiz() {
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('start-screen').style.display = 'block';
+  document.querySelector('.header').style.display = 'block';
+}
+</script>
+</body>
+</html>
